@@ -33,17 +33,21 @@ object OkHttpSingleton {
         }
 
     private var instance: OkHttpClient? = null
+    private var preEnableNetworkBypass:Boolean = false
 
     fun getInstance(): OkHttpClient {
-        if (instance == null) {
+        val enableNetworkBypass = PreferenceManager.getDefaultSharedPreferences(PixivMuzei.context?.applicationContext)
+            .getBoolean("pref_enableNetworkBypass", false)
+        if (instance == null || preEnableNetworkBypass != enableNetworkBypass) {
+            preEnableNetworkBypass = enableNetworkBypass
             instance = OkHttpClient.Builder()
                 .retryOnConnectionFailure(true)
                 .apply {
-                    val prefs = PreferenceManager.getDefaultSharedPreferences(PixivMuzei.context?.applicationContext)
-                    if (prefs.getBoolean("pref_enableNetworkBypass", false)) {
+                    if (enableNetworkBypass) {
                         sslSocketFactory(RubySSLSocketFactory(), x509TrustManager)
                         dns(RubyHttpDns.getInstance())
                     }
+
                 }
                 //.hostnameVerifier { _, _ -> true }
                 .logOnDebug()
